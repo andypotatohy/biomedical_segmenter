@@ -1,0 +1,10 @@
+In contrast to the Segmenter partitions, these are not organized by train/test
+because the model has not been yet decided. Can be done within model script.
+
+These partitions are organized by pathology: Malignants, Benigns and Converts which
+have a different pathology depending on risk prediction time-frame.
+
+The proper label assignment of the converts has to be done using the triples
+spreadsheet: 
+/home/deeperthought/Projects/MSKCC/MSKCC_Data/alignedNii-Nov2019_DataDescription/generate_aligned-Nov2019_DataDescription/aligned-Nov2019_Triples_Pathology.csv
+
