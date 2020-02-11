@@ -27,6 +27,7 @@ def makeFiles(argv):
     w = 1
     v = 1
     t = 1
+    #session = '/home/deeperthought/Projects/MultiPriors_MSKCC/training_sessions/UNet_v0_TumorSegmenter_breastMask_UNet_v0_TumorSegmenter_DGNS_2020-01-23_1658/'
     save = False
     try:
 		opts, args = getopt.getopt(argv,"hsf:m:v:t:",["file=", "movingAverage=","movingAverageVal=","movingAverageTest="])
@@ -74,6 +75,32 @@ def makeFiles(argv):
     bashCommand_getDSC = "grep 'Overall DCS' " + log_file +  "  | awk '{print $3}'  | sed 's/]//' "
     bashCommand_getSMOOTH_DSC = "grep 'Overall SMOOTH_DCS' " + log_file +  "  | awk '{print $3}'  | sed 's/]//' "
     bashCommand_get_foreground = "grep 'Epoch_foreground_percent' " + log_file +  "  | awk '{print $2}'  | sed 's/]//' "
+    
+    
+#    bashCommand_indDICE = "grep -A3 'Full segmentation evaluation of' " + log_file +  "  | awk '{print $2}'  | sed 's/]//' "
+#    p = Popen(bashCommand_indDICE, stdout=PIPE, shell=True)
+#    output = p.communicate()
+#    indDice = output[0].split('subject0')
+#    [x.split('DCS ')[-1] for x in indDice]
+
+    bashCommand_indDICE = "cat " + log_file 
+    p = Popen(bashCommand_indDICE, stdout=PIPE, shell=True)
+    output = p.communicate()
+    epochs = output[0].split('FULL HEAD SEGMENTATION')
+    segmentation_results = [x.split('Overall DCS')[0] for x in epochs ][1:]
+    len(segmentation_results)
+    epoch = []
+    dice_scan_epoch = []
+    for i in range(len(segmentation_results)):
+        epoch.append([x for x in segmentation_results[i].replace('SMOOTH_DCS','SMOOTH').split('DCS ')])
+    for i in range(len(epoch)):    
+        dice_scan_epoch.append([float(x[:6]) for x in epoch[i][1:]][:50])
+       
+    if len(dice_scan_epoch) > 1:
+        if len(dice_scan_epoch[-1]) < len(dice_scan_epoch[-2]):
+            dice_scan_epoch = dice_scan_epoch[:-1]
+                
+
 
     train = np.load(session + '/LOSS.npy', allow_pickle=True)
     metric = np.load(session + '/METRICS.npy', allow_pickle=True)
@@ -208,12 +235,16 @@ def makeFiles(argv):
     plt.grid(b=True, which='minor',alpha=0.35, zorder=1) 
     
     ax6 = plt.subplot(326)#, sharey=ax4) 
+
     plt.plot(range(len(SMOOTH_DSC)),SMOOTH_DSC,'b-o',alpha=0.8)   
     plt.plot(range(len(DSC)),DSC,'k-o',alpha=0.8)
-    plt.legend(('Smooth Dice','Dice'), loc='lower right')
+    plt.legend(('Smooth Dice','Dice'), loc='lower center')
+    if len(dice_scan_epoch) == len(SMOOTH_DSC):
+        plt.boxplot(positions=range(len(SMOOTH_DSC)),x=dice_scan_epoch, showmeans=False,bootstrap=100)
+#    plt.plot(dice_scan_epoch, alpha=0.7)
     plt.xlabel('Epochs')
     plt.grid(b=True, which='major',zorder=1)
-    plt.minorticks_on()
+    #plt.minorticks_on()
     plt.grid(b=True, which='minor',alpha=0.35, zorder=1)     
     
     

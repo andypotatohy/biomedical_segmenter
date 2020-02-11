@@ -563,7 +563,7 @@ def UNet_v4(input_shape=(19,75,75,3), pool_size=(2, 2, 2), n_labels=2, initial_l
     which makes unclear which border pixel needs to be cropped, and also compared against max pooling kernel 3 stride 2, which introduces 
     border artifacts due to the overlap max pooling).
     """
-    input_shape = (19,75,75,3)
+    #input_shape = (19,75,75,3)
     inputs = Input(input_shape)
     current_layer = inputs
     levels = list()
@@ -605,7 +605,9 @@ def UNet_v4(input_shape=(19,75,75,3), pool_size=(2, 2, 2), n_labels=2, initial_l
         current_layer = create_convolution_block(n_filters=levels[layer_depth][1]._keras_shape[-1], kernel=kernel[layer_depth],
                                                  input_layer=current_layer, batch_normalization=batch_normalization, padding='valid')
     
-    final_convolution = Conv3D(n_labels, (1, 1, 1))(current_layer)
+    feature_extraction_layer = Conv3D(16, (1, 1, 1), name='FEATURE_EXTRACTION_DGNS')(current_layer)
+    
+    final_convolution = Conv3D(n_labels, (1, 1, 1))(feature_extraction_layer)
     act = Activation(activation_name)(final_convolution)
     model = Model(inputs=inputs, outputs=act)
     
@@ -792,14 +794,14 @@ def UNet_v0_BreastMask(input_shape =  (3, 256,256,1), pool_size=(1, 2, 2), n_lab
 #initial_learning_rate=0.00001
 #deconvolution=False
 #depth=6
-#n_base_filters=32
+#n_base_filters=16
 #include_label_wise_dice_coefficients=False
 #batch_normalization=True
 #activation_name="softmax"
 #bilinear_upsampling=True
 
 def UNet_v0_TumorSegmenter(input_shape =  (3, 512, 512,2), pool_size=(1, 2, 2), n_labels=1, initial_learning_rate=0.00001, deconvolution=False,
-                      depth=4, n_base_filters=32, include_label_wise_dice_coefficients=False, 
+                      depth=4, n_base_filters=16, include_label_wise_dice_coefficients=False, 
                       batch_normalization=False, activation_name="softmax"):
         """ Simple version, padding 'same' on every layer, output size is equal to input size. Has border artifacts and checkerboard artifacts """
         inputs = Input(input_shape)
@@ -807,15 +809,15 @@ def UNet_v0_TumorSegmenter(input_shape =  (3, 512, 512,2), pool_size=(1, 2, 2), 
     
         coords = Input((1,512,512,3))
 
-        current_layer = Conv3D(8, (3, 1, 1))(inputs)
+        current_layer = Conv3D(n_base_filters, (3, 1, 1))(inputs)
 
         current_layer = concatenate([current_layer, coords])
     
         # add levels with max pooling
         for layer_depth in range(depth):
-            layer1 = create_convolution_block(input_layer=current_layer, kernel=(1,3,3), n_filters=16*(layer_depth+1),
+            layer1 = create_convolution_block(input_layer=current_layer, kernel=(1,3,3), n_filters=n_base_filters*(layer_depth+1),
                                               batch_normalization=batch_normalization, padding='same')
-            layer2 = create_convolution_block(input_layer=layer1, kernel=(1,3,3),  n_filters=16*(layer_depth+1),
+            layer2 = create_convolution_block(input_layer=layer1, kernel=(1,3,3),  n_filters=n_base_filters*(layer_depth+1),
                                               batch_normalization=batch_normalization, padding='same')
             if layer_depth < depth - 1:
                 current_layer = MaxPooling3D(pool_size=(1,2,2))(layer2)
@@ -827,12 +829,12 @@ def UNet_v0_TumorSegmenter(input_shape =  (3, 512, 512,2), pool_size=(1, 2, 2), 
         for layer_depth in range(depth-2, -1, -1):
             
             up_convolution = get_up_convolution(pool_size=(1,2,2), deconvolution=deconvolution,
-                                                n_filters=16*(layer_depth+1))(current_layer)
+                                                n_filters=n_base_filters*(layer_depth+1))(current_layer)
 
             concat = concatenate([up_convolution, levels[layer_depth][1]] , axis=-1)
-            current_layer = create_convolution_block(n_filters=16*(layer_depth+1),kernel=(1,3,3), 
+            current_layer = create_convolution_block(n_filters=n_base_filters*(layer_depth+1),kernel=(1,3,3), 
                                                      input_layer=concat, batch_normalization=batch_normalization, padding='same')
-            current_layer = create_convolution_block(n_filters=16*(layer_depth+1),kernel=(1,3,3), 
+            current_layer = create_convolution_block(n_filters=n_base_filters*(layer_depth+1),kernel=(1,3,3), 
                                                      input_layer=current_layer, batch_normalization=batch_normalization, padding='same')
             #L += 1
 
@@ -841,8 +843,7 @@ def UNet_v0_TumorSegmenter(input_shape =  (3, 512, 512,2), pool_size=(1, 2, 2), 
         current_layer = concatenate([current_layer, coords])
     
         final_convolution = Conv3D(2, (1, 1, 1))(current_layer)
-        
-       
+              
         act = Activation(activation_name)(final_convolution)
         model = Model(inputs=[inputs, coords], outputs=act)
         model.compile(loss=Generalised_dice_coef_multilabel2, optimizer=Adam(lr=initial_learning_rate), metrics=['acc', dice_coef_multilabel_bin0, dice_coef_multilabel_bin1])

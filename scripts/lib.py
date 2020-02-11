@@ -197,6 +197,24 @@ def getSubjectShapes(subjectIndexes, n_patches, channelList):
         shapes.append(out_shape)
     return shapes      
 
+#for i in range(len(DATA_INPUT_WRAPPER)):
+#    print(i)
+#    DATA_INPUT = DATA_INPUT_WRAPPER[i]
+#    subjectIndexes = DATA_INPUT[0]
+#    target_shape = DATA_INPUT[1]
+#    patches_per_subject = DATA_INPUT[2]
+#    channels = DATA_INPUT[3]
+#    channel_mri = DATA_INPUT[4]     
+#    dpatch = DATA_INPUT[5]  
+#    n_patches = DATA_INPUT[6]    
+#    samplingMethod = DATA_INPUT[7] 
+#    output_classes = DATA_INPUT[8]  
+#    percentile_voxel_intensity_sample_benigns = DATA_INPUT[9]
+#    percentile_normalization = DATA_INPUT[10]
+#    CV_FOLDS_ARRAYS_PATH = DATA_INPUT[11]
+#    generateVoxelIndexes_parallel(subjectIndexes,CV_FOLDS_ARRAYS_PATH, target_shape, patches_per_subject, dpatch, n_patches, channels, channel_mri, samplingMethod, output_classes, percentile_voxel_intensity_sample_benigns,percentile_normalization, allForegroundVoxels = "", verbose=False)
+
+
 def generateVoxelIndexes_wrapper_parallelization(DATA_INPUT):
     subjectIndexes = DATA_INPUT[0]
     target_shape = DATA_INPUT[1]
@@ -212,9 +230,12 @@ def generateVoxelIndexes_wrapper_parallelization(DATA_INPUT):
     CV_FOLDS_ARRAYS_PATH = DATA_INPUT[11]
     return generateVoxelIndexes_parallel(subjectIndexes,CV_FOLDS_ARRAYS_PATH, target_shape, patches_per_subject, dpatch, n_patches, channels, channel_mri, samplingMethod, output_classes, percentile_voxel_intensity_sample_benigns,percentile_normalization, allForegroundVoxels = "", verbose=False)
 
+
+def truncated_normal(mean, stddev, minval, maxval):
+    return np.clip(np.random.normal(mean, stddev), minval, maxval)
+
 def generateVoxelIndexes_parallel(subjectIndexes,CV_FOLDS_ARRAYS_PATH, target_shape, patches_per_subject, dpatch, n_patches, channels, channel_mri, samplingMethod, output_classes, percentile_voxel_intensity_sample_benigns ,percentile_normalization , allForegroundVoxels = "", verbose=False):
     allVoxelIndexes = {} #{a:None for a in subjectIndexes} 
-
     #--------------------------------------------------------------------------------------------------------------------------------------------------
     if samplingMethod == 0:
         "Sample voxels from random locations in a SLICE. This allows sampling from any class present in the SLICE."
@@ -224,8 +245,13 @@ def generateVoxelIndexes_parallel(subjectIndexes,CV_FOLDS_ARRAYS_PATH, target_sh
         
         if 'BENIGN' not in channels:      
             data_label = nib.load(channels).get_data()
-            foreground_voxels = np.argwhere(data_label>0)
-            mySlice = foreground_voxels[0][0]  
+            if np.sum(data_label) == 0:
+                print('Found malignant scan with empty segmentation: {}'.format(channels))
+                # Assign slice to pick a border slice..
+                mySlice = 3
+            else:
+                foreground_voxels = np.argwhere(data_label>0)                
+                mySlice = foreground_voxels[0][0]  
             #background_voxels = np.argwhere(data_label[mySlice] == 0)
             for _ in range(patches_per_subject):
                 x = mySlice 
@@ -234,7 +260,8 @@ def generateVoxelIndexes_parallel(subjectIndexes,CV_FOLDS_ARRAYS_PATH, target_sh
                 scanVoxels.append([x,y,z])
         else:
             for _ in range(patches_per_subject):
-                x = random.choice(xrange(dpatch[0]/2,int(target_shape[0])-(dpatch[0]/2)+1))
+                x = int(truncated_normal(mean=target_shape[0]/2, stddev=target_shape[0]/5, minval=0, maxval=target_shape[0])) # --> Make more probably to pick slices from the MIDDLE. 
+                #x = random.choice(xrange(dpatch[0]/2,int(target_shape[0])-(dpatch[0]/2)+1))   
                 y = random.choice(xrange(dpatch[1]/2,int(target_shape[1])-(dpatch[1]/2)+1))
                 z = random.choice(xrange(dpatch[2]/2,int(target_shape[2])-(dpatch[2]/2)+1))
                 scanVoxels.append([x,y,z])            
@@ -658,13 +685,17 @@ def extractImagePatch_parallelization(channel, subjectIndex, subject_channel_vox
         img_data[ ~ np.isfinite(img_data)] = np.nanmin(img_data)
         
     if fullSegmentationPhase:      
-        padding_border = np.max(dpatch)#np.max(dpatch)/2 + 10#550
+        if np.max(dpatch) > 200:  # This is the case with the full-image U-Net_v0. If we pad too big, this takes a lot of time and unnecessary resources.
+            padding_border = 10#np.max(dpatch)#np.max(dpatch)/2 + 10#550
+        else:
+            padding_border = np.max(dpatch)
     else:
         padding_border = np.max(dpatch)/2 + 10
     # Padding needs to be larger than dpatch/2. During training all patches are centered within the image so here its enough.
     # But during testing, we need to sample over all center patches, which means that we can go outside the original image boundaries.
     # Example: image size = 7, center patch size = 3
     # Image : [0123456] center-patches: [012][345][678] . Last patch was centered on 7, just to capture the 6 on the border. 
+    #print('Padding image..')
     img_data_padded = np.pad(img_data, padding_border,'reflect')    
     
     vol = np.zeros((n_patches,dpatch[0],dpatch[1],dpatch[2]),dtype='float32') 
@@ -2161,7 +2192,7 @@ def train_test_model(configFile, workingDir):
         elif cfg.model == 'UNet_v0_TumorSegmenter':
             from Unet_3D_Class import UNet_v0_TumorSegmenter
             model = UNet_v0_TumorSegmenter(input_shape =  (3, 512, 512,4), pool_size=(1, 2, 2), n_labels=1, initial_learning_rate=0.00001, deconvolution=False,
-                      depth=5, n_base_filters=32, include_label_wise_dice_coefficients=False, 
+                      depth=6, n_base_filters=16, include_label_wise_dice_coefficients=False, 
                       batch_normalization=True, activation_name="softmax")
             model.summary()  
 
@@ -2539,6 +2570,9 @@ def train_test_model(configFile, workingDir):
         epoch_loss, epoch_metrics = train_validate_model_on_batch(cfg.model, model,context,patches,
                                                               target_labels, spatial_coordinates, TPM_patches,
                                                               cfg.size_minibatches,history,losses,metrics,cfg.output_classes, logfile, using_unet_breastMask=cfg.using_unet_breastMask)  
+        # For large datasets, save model after every weight updates
+        print('Saving model..')
+        model.save(wd+'/models/last_model.h5')        
         try:
           global_loss = np.concatenate([np.load(wd + '/LOSS.npy', allow_pickle=True), epoch_loss])
           global_metrics = np.concatenate([np.load(wd + '/METRICS.npy', allow_pickle=True), epoch_metrics]) 
@@ -2548,9 +2582,7 @@ def train_test_model(configFile, workingDir):
           np.save(wd + '/LOSS.npy', epoch_loss)
           np.save(wd + '/METRICS.npy', epoch_metrics)              
 
-      # For large datasets, save model after every 'epoch'
-      #print('Saving model..')
-      #model.save(wd+'/models/'+logfile[12:]+'_epoch' + str(epoch) + '.h5')        
+
       my_logger('Total training this epoch took ' + str(round(time.time()-t1,2)) + ' seconds',logfile)
       #############################################################################################################################
 
