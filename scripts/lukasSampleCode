@@ -1,0 +1,168 @@
+target=sampleTrainData_daemon, args=(return_dict, 'VALIDATION',cfg.resolution, cfg.validationChannels, CV_FOLDS_ARRAYS_PATH, cfg.validationLabels, cfg.TPM_channel, cfg.n_patches_val, 
+#                                                                            cfg.n_subjects_val, cfg.dpatch, cfg.output_classes, cfg.samplingMethod_val, cfg.use_coordinates, 
+#                                                                            cfg.proportion_malignants_to_sample_val, cfg.percentile_voxel_intensity_sample_benigns, 
+#                                                                            cfg.data_augmentation, cfg.proportion_to_flip, cfg.percentile_normalization,  cfg.model_patch_reduction, cfg.model_crop,
+#                                                                            cfg.balanced_sample_subjects))
+
+
+DATA_INPUT_WRAPPER = zip(subjectIndexes, shapes, patches_per_subject, channels, channel_mri, [dpatch] * len(patches_per_subject), [n_patches]*len(patches_per_subject), [samplingMethod]*len(patches_per_subject), [output_classes]*len(patches_per_subject), [percentile_voxel_intensity_sample_benigns]*len(patches_per_subject), [percentile_normalization]*len(patches_per_subject), [CV_FOLDS_ARRAYS_PATH]*len(patches_per_subject))
+
+subjectIndexes = DATA_INPUT[0]
+    target_shape = DATA_INPUT[1]
+    patches_per_subject = DATA_INPUT[2]
+    channels = DATA_INPUT[3]
+    channel_mri = DATA_INPUT[4]     
+    dpatch = DATA_INPUT[5]  
+    n_patches = DATA_INPUT[6]    
+    samplingMethod = DATA_INPUT[7] 
+    output_classes = DATA_INPUT[8]  
+    percentile_voxel_intensity_sample_benigns = DATA_INPUT[9]
+    percentile_normalization = DATA_INPUT[10]
+    CV_FOLDS_ARRAYS_PATH = DATA_INPUT[11]
+   
+generateVoxelIndexes_parallel(subjectIndexes,CV_FOLDS_ARRAYS_PATH, shapes, patches_per_subject, dpatch, n_patches, channels, channel_mri, samplingMethod, output_classes, percentile_voxel_intensity_sample_benigns,percentile_normalization, allForegroundVoxels = "", verbose=False)
+
+DATA_INPUT_EXTRACT_IMAGE_PATCH = zip(subjectIndexes, [trainChannels[i]]*len(subjectIndexes), [dpatch] * len(subjectIndexes), voxelCoordinates, shapes, [percentile_normalization]*len(subjectIndexes))
+
+subjectIndex = DATA_INPUT[0]
+  channel = DATA_INPUT[1]
+  dpatch = DATA_INPUT[2]
+  subject_channel_voxelCoordinates = DATA_INPUT[3]
+  output_shape = DATA_INPUT[4]
+  percentile_normalization = DATA_INPUT[5]
+
+extractImagePatch_parallelization(channel, subjectIndex, subject_channel_voxelCoordinates, output_shape, dpatch, percentile_normalization)
+
+
+DATA_INPUT_EXTRACT_LABELS_PATCH = zip(subjects_label_channels, voxelCoordinates, [output_dpatch] * len(subjectIndexes), shapes)
+
+subject_label_channel = DATA_INPUT_EXTRACT_LABELS_PATCH[0]
+    voxelCoordinates = DATA_INPUT_EXTRACT_LABELS_PATCH[1]
+    output_dpatch = DATA_INPUT_EXTRACT_LABELS_PATCH[2]
+    output_shape = DATA_INPUT_EXTRACT_LABELS_PATCH[3]    
+
+extractLabels_parallelization(subject_label_channel, voxelCoordinates, output_dpatch, output_shape)
+
+
+def getSubjectsToSample(channelList, subjectIndexes):
+    "Actually returns channel of the subjects to sample"
+    fp = open(channelList)
+    lines = fp.readlines()
+    subjects = [lines[i] for i in subjectIndexes]
+    fp.close()
+    return subjects
+
+def getSubjectChannels(subjectIndexes, channel):
+    "With the channels (any modality) and the indexes of the selected subjects, return the addresses of the subjects channels"
+    fp = open(channel)
+    # read file, per subject index extract patches given the indexesPatch
+    lines = fp.readlines()
+    selectedSubjects = [lines[i][:-1] for i in subjectIndexes]
+    fp.close()
+    return selectedSubjects
+
+
+train_validate_model_on_batch(cfg.model, model, context, patches, target_labels, spatial_coordinates, TPM_patches, cfg.size_minibatches_val, history, losses,  metrics, 
+                                                               cfg.output_classes, logfile, TRAINING_FLAG=False, using_unet_breastMask=cfg.using_unet_breastMask)) 
+train_validate_model_on_batch(cfg.model, model, context,patches,  target_labels, spatial_coordinates, TPM_patches, cfg.size_minibatches,history,losses,metrics,
+                                                               cfg.output_classes, logfile, using_unet_breastMask=cfg.using_unet_breastMask)  
+
+mlniitb < spmnx << py nx
+lpimpsti lpzaiyiciwanbaiwo sx
+
+
+def dice_coef(y_true, y_pred):
+    smooth = 1e-6
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    return (2. * intersection + smooth) / (K.sum(y_true_f**2) + K.sum(y_pred_f**2) + smooth)
+
+
+def generalized_dice_completeImages(img1,img2):
+    assert img1.shape == img2.shape, 'Images of different size!'
+    #assert (np.unique(img1) == np.unique(img2)).all(), 'Images have different classes!'
+    classes = np.array(np.unique(img1), dtype='int8')   
+    if len(classes) < len(np.array(np.unique(img2), dtype='int8')   ):
+      classes = np.array(np.unique(img2), dtype='int8')   
+    dice = []
+    for i in classes:
+        dice.append(2*np.sum(np.multiply(img1==i,img2==i))/float(np.sum(img1==i)+np.sum(img2==i)))   
+    return np.sum(dice)/len(classes), [round(x,2) for x in dice]
+
+def Generalised_dice_coef_multilabel2(label_data, img_probs, numLabels=2):
+    y_true = np.zeros((np.prod(label_data.shape), 2))
+    y_true[:,1] = label_data.reshape(np.prod(label_data.shape))
+    y_true[:,0] = 1 - y_true[:,1]
+    y_pred = np.zeros((np.prod(img_probs.shape), 2))
+    y_pred[:,1] = img_probs.reshape(np.prod(img_probs.shape))
+    y_pred[:,0] = 1 - y_pred[:,1]
+    
+    dice=0
+    for index in range(numLabels):
+        dice -= dice_coef(y_true[:,index], y_pred[:,index])
+    return dice*-1 
+
+
+def Generalised_dice_coef_multilabel2(y_true, y_pred, numLabels=2):
+    """This is the loss function to MINIMIZE. A perfect overlap returns 0. Total disagreement returns numeLabels"""
+    dice=0
+    for index in range(numLabels):
+        dice -= dice_coef(y_true[:,:,:,:,index], y_pred[:,:,:,:,index])
+    return numLabels + dice
+
+def dice_coef_multilabel_bin0(y_true, y_pred):
+    dice = dice_coef(y_true[:,:,:,:,0], K.round(y_pred[:,:,:,:,0]))
+    return dice
+
+def dice_coef_multilabel_bin1(y_true, y_pred):
+    dice = dice_coef(y_true[:,:,:,:,1], K.round(y_pred[:,:,:,:,1]))
+    return dice
+
+# Half from random locations:
+for _ in range(patches_per_subject/2):
+      x = random.choice(xrange(dpatch[0]/2,int(target_shape[0])-(dpatch[0]/2)+1)) 
+      y = random.choice(xrange(dpatch[1]/2,int(target_shape[1])-(dpatch[1]/2)+1))
+      z = random.choice(xrange(dpatch[2]/2,int(target_shape[2])-(dpatch[2]/2)+1))
+      scanVoxels.append([x,y,z])
+
+for _ in range(patches_per_subject):
+      x = random.choice(xrange(dpatch[0]/2,int(target_shape[0])-(dpatch[0]/2)+1))  
+      y = random.choice(xrange(dpatch[1]/2,int(target_shape[1])-(dpatch[1]/2)+1))
+      z = random.choice(xrange(dpatch[2]/2,int(target_shape[2])-(dpatch[2]/2)+1))
+      scanVoxels.append([x,y,z])
+
+vol[j,:,:,:] = proxy_img.dataobj[D1-(dpatch[0]/2):D1+(dpatch[0]/2)+dpatch[0]%2,
+                                 D2-(dpatch[1]/2):D2+(dpatch[1]/2)+dpatch[1]%2,
+                                 D3-(dpatch[2]/2):D3+(dpatch[2]/2)+dpatch[2]%2]
+
+indBoundary = (bV[:,0]<dpatch[0]/2+dontknow) | (bV[:,0]>int(target_shape[0])-(dpatch[0]/2)-1-dontknow) | \
+                                  (bV[:,1]<dpatch[1]/2+dontknow) | (bV[:,1]>int(target_shape[1])-(dpatch[1]/2)-1-dontknow) | \
+                                  (bV[:,2]<dpatch[2]/2+dontknow) | (bV[:,2]>int(target_shape[2])-(dpatch[2]/2)-1-dontknow)
+                       
+timeneed:
+load patches > load image by get_data > load image by dataobj
+60s 60s                 25s 45s 45s     20s 20s 1s?
+
+3  0.02 0.001
+
+
+fullSegmentation(wd, cfg.penalty_MATRIX,cfg.resolution, cfg.OUTPUT_PATH, cfg.TPM_channel,                                                                                                   dice_compare, dsc, smooth_dice_scores, foreground_percent_list, model, cfg.testChannels, cfg.testLabels, subjectIndex, 
+                                                                                                  cfg.output_classes, cfg.segmentation_dpatch, cfg.size_test_minibatches,
+                                                                                                  cfg.output_probability, cfg.use_coordinates, cfg.percentile_normalization,
+                                                                                                  cfg.model_patch_reduction, cfg.model_crop, epoch, using_Unet=True, 
+                                                                                                  using_unet_breastMask=cfg.using_unet_breastMask)
+
+fullSegmentation(wd, penalty_MATRIX, resolution, OUTPUT_PATH, TPM_channel, dice_compare, dsc, smooth_dice_scores,foreground_percent_list, model, testChannels, testLabels, subjectIndex, output_classes, segmentation_dpatch, size_minibatches,output_probability, use_coordinates, percentile_normalization, model_patch_reduction, model_crop, epoch, using_breastMaskModel=False, MASK_BREAST=False, using_Unet=False, using_unet_breastMask=False):    
+
+using_Unet  true
+using_breastMaskModel skipped so false
+using_unet_breastMask  true
+
+
+dsc only gathers dice for malignant cases; returned
+smooth_dice_scores only gathers smooth dice for malignant cases; modified in-place
+foreground_percent_list only gathers foreground_percent for benign cases; modified in-place
+
+so do not trust the numbers in the log file under full-seg section for each subject; trust the numbers in 'Overall DCS' which is also plotLossFunctionKeras.py is using
+

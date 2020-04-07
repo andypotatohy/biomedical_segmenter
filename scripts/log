@@ -1,0 +1,129 @@
+runfile('/home/andy/projects/lukasSegmenter/biomedical_segmenter/scripts/nifti1_read_write.py', wdir='/home/andy/projects/lukasSegmenter/biomedical_segmenter/scripts')
+reading took 0.000329971313477 s
+4.958333253860474
+93, 365, 175, 
+95, 365, 175, 
+3
+fseek from 0 to 18712813
+offset 74851252
+fread from 18712813 to 18712815
+readLen 3
+1.606965, 1.611940, 1.739428, 
+
+XYZT dimensions: 208 512 512 1
+Datatype code and bits/pixel: 16 32
+Scaling slope and intercept: 1.000000 0.000000
+Byte offset to data in datafile: 352
+
+runfile('/home/andy/projects/lukasSegmenter/biomedical_segmenter/scripts/nifti1_read_write.py', wdir='/home/andy/projects/lukasSegmenter/biomedical_segmenter/scripts')
+reading took 0.000147819519043 s
+4.417288541793823
+93, 365, 175, 
+95, 366, 175, 
+6
+fseek from 0 to 18712813
+offset 74851252
+fread from 18712813 to 18712815
+readLen 3
+fseek from 18712815 to 18713021
+offset 74852084
+fread from 18713021 to 18713023
+readLen 3
+1.304104, 1.396766, 1.716418, 0.000000, 0.000000, 0.000000, 
+
+XYZT dimensions: 208 512 512 1
+Datatype code and bits/pixel: 16 32
+Scaling slope and intercept: 1.000000 0.000000
+Byte offset to data in datafile: 352
+
+gqbdzmdd sx
+
+zoom jj jiuyongshangle
+vpn zxiang jiuzhenghaokyzuole youmtvtzl
+fs
+
+C
+F/ML
+2zonly
+
+
+C on HDD
+VALIDATION : sampling 20 malignants from partition
+VALIDATION : Getting scan shapes took 0.8 s
+VALIDATION : ------------ Generating List of Voxel Indexes for sampling  ------------
+VALIDATION : Generating List of Voxel Indexes for sampling took 4.58 s
+VALIDATION : ------  Extracting 480 image patches from 40 subjects, for each of 3 channels --------
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_t1post_LOCAL.txt
+VALIDATION : Extracting image patches took 48.78 s
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_slope1_LOCAL.txt
+VALIDATION : Extracting image patches took 48.74 s
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_slope2_LOCAL.txt
+VALIDATION : Extracting image patches took 49.34 s
+
+PY ON HDD (apply dataobj to each patch separately)
+VALIDATION : sampling 20 malignants from partition
+VALIDATION : Getting scan shapes took 0.11 s
+VALIDATION : ------------ Generating List of Voxel Indexes for sampling  ------------
+VALIDATION : Generating List of Voxel Indexes for sampling took 5.48 s
+VALIDATION : ------  Extracting 480 image patches from 40 subjects, for each of 3 channels --------
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_t1post_LOCAL.txt
+VALIDATION : Extracting image patches took 31.74 s
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_slope1_LOCAL.txt
+VALIDATION : Extracting image patches took 39.0 s
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_slope2_LOCAL.txt
+VALIDATION : Extracting image patches took 51.37 s
+
+PY ON HDD (apply dataobj to the entire image)
+VALIDATION : sampling 20 malignants from partition
+VALIDATION : Getting scan shapes took 0.01 s
+VALIDATION : ------------ Generating List of Voxel Indexes for sampling  ------------
+VALIDATION : Generating List of Voxel Indexes for sampling took 4.55 s
+VALIDATION : ------  Extracting 480 image patches from 40 subjects, for each of 3 channels --------
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_t1post_LOCAL.txt
+VALIDATION : Extracting image patches took 18.24 s
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_slope1_LOCAL.txt
+VALIDATION : Extracting image patches took 21.07 s
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_slope2_LOCAL.txt
+VALIDATION : Extracting image patches took 27.29 s
+
+
+
+C ON SSD
+VALIDATION : sampling 20 malignants from partition
+VALIDATION : Getting scan shapes took 0.02 s
+VALIDATION : ------------ Generating List of Voxel Indexes for sampling  ------------
+VALIDATION : Generating List of Voxel Indexes for sampling took 5.14 s
+VALIDATION : ------  Extracting 480 image patches from 40 subjects, for each of 3 channels --------
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_t1post_LOCAL.txt
+VALIDATION : Extracting image patches took 5.88 s
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_slope1_LOCAL.txt
+VALIDATION : Extracting image patches took 6.43 s
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_slope2_LOCAL.txt
+VALIDATION : Extracting image patches took 5.93 s
+
+PY ON SSD (apply dataobj to each patch separately)
+VALIDATION : sampling 20 malignants from partition
+VALIDATION : Getting scan shapes took 0.01 s
+VALIDATION : ------------ Generating List of Voxel Indexes for sampling  ------------
+VALIDATION : Generating List of Voxel Indexes for sampling took 5.28 s
+VALIDATION : ------  Extracting 480 image patches from 40 subjects, for each of 3 channels --------
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_t1post_LOCAL.txt
+VALIDATION : Extracting image patches took 9.54 s
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_slope1_LOCAL.txt
+VALIDATION : Extracting image patches took 9.1 s
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_slope2_LOCAL.txt
+VALIDATION : Extracting image patches took 9.05 s
+
+PY ON SSD (apply dataobj to the entire image)
+VALIDATION : sampling 20 malignants from partition
+VALIDATION : Getting scan shapes took 0.01 s
+VALIDATION : ------------ Generating List of Voxel Indexes for sampling  ------------
+VALIDATION : Generating List of Voxel Indexes for sampling took 4.61 s
+VALIDATION : ------  Extracting 480 image patches from 40 subjects, for each of 3 channels --------
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_t1post_LOCAL.txt
+VALIDATION : Extracting image patches took 1.58 s
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_slope1_LOCAL.txt
+VALIDATION : Extracting image patches took 1.52 s
+VALIDATION : Extracting image patches from channel: /home/andy/projects/lukasSegmenter/biomedical_segmenter/CV_nov/valAxial250segIn19093_slope2_LOCAL.txt
+VALIDATION : Extracting image patches took 1.61 s
+
